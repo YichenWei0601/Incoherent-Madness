@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Incoherent Madness - LLM Art Experiment</title>
+    <link href="https://fonts.googleapis.com/css2?family=Gloria+Hallelujah&family=Amatic+SC:wght@400;700&family=Permanent+Marker&family=Caveat+Brush&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', '微软雅黑', sans-serif;
+            background: linear-gradient(135deg, #030436 0%, #210c45 50%, #052452 100%);
+            min-height: 100vh;
+            color: #f5f5f5;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            color: white;
+        }
+
+        .title {
+            font-family: 'Permanent Marker', cursive;
+            font-size: 3em;
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .subtitle {
+            font-family: 'Caveat Brush', cursive;
+            font-size: 1.4em;
+            opacity: 0.9;
+            margin-bottom: 30px;
+        }
+
+        .main-content {
+            background: rgba(40, 40, 40, 0.95);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .text-display {
+            background: linear-gradient(135deg, #2a2a2a 0%, #1f1f1f 100%);
+            border-radius: 20px;
+            padding: 35px;
+            margin-bottom: 30px;
+            min-height: 200px;
+            border: 1px solid #555;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .text-content {
+            font-family: 'Gloria Hallelujah', cursive;
+            font-size: 1.3em;
+            line-height: 1.8;
+            transition: all 0.3s ease;
+            color: #e0e0e0;
+        }
+
+        .error-highlight {
+            background: linear-gradient(120deg, transparent 0%, rgba(255, 107, 107, 0.3) 50%, transparent 100%);
+            padding: 2px 4px;
+            border-radius: 3px;
+            transition: all 0.3s ease;
+        }
+
+        .controls {
+            margin-bottom: 30px;
+        }
+
+        .slider-container {
+            margin-bottom: 20px;
+        }
+
+        .slider-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            font-weight: bold;
+            font-family: 'Amatic SC', cursive;
+            font-size: 1.4em;
+        }
+
+        .error-level {
+            background: linear-gradient(90deg, #00b894 0%, #fdcb6e 25%, #e17055 50%, #fd79a8 75%, #6c5ce7 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-family: 'Amatic SC', cursive;
+            font-size: 1.3em;
+            font-weight: 700;
+        }
+
+        .slider {
+            width: 100%;
+            height: 10px;
+            border-radius: 5px;
+            background: linear-gradient(90deg, #00b894 0%, #fdcb6e 25%, #e17055 50%, #fd79a8 75%, #6c5ce7 100%);
+            outline: none;
+            -webkit-appearance: none;
+            position: relative;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            background: #f0f0f0;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            border: 3px solid #888;
+            transition: all 0.2s ease;
+        }
+
+        .slider::-webkit-slider-thumb:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+        }
+
+        .buttons {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 25px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #4a4a4a, #666666);
+            color: white;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            border: 1px solid #777;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+            background: linear-gradient(45deg, #555555, #777777);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(45deg, #2a2a2a, #404040);
+            color: white;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            border: 1px solid #555;
+        }
+
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+            background: linear-gradient(45deg, #333333, #4a4a4a);
+        }
+
+        .error-info {
+            background: linear-gradient(135deg, rgba(80, 80, 80, 0.2), rgba(60, 60, 60, 0.1));
+            border-radius: 20px;
+            padding: 25px;
+            margin-top: 20px;
+            border: 1px solid rgba(120, 120, 120, 0.3);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .error-info h3 {
+            font-family: 'Amatic SC', cursive;
+            font-size: 1.6em;
+            font-weight: 700;
+            margin-bottom: 15px;
+            color: #d0d0d0;
+        }
+
+        .error-types {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .error-type {
+            background: linear-gradient(135deg, #3a3a3a, #2a2a2a);
+            color: #e0e0e0;
+            padding: 12px 18px;
+            border-radius: 12px;
+            font-size: 0.9em;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.2);
+            border: 1px solid #555;
+        }
+
+        .loading {
+            text-align: center;
+            color: #b0b0b0;
+            font-style: italic;
+        }
+
+        .wave {
+            animation: wave 2s ease-in-out infinite;
+        }
+
+        @keyframes wave {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.9em;
+        }
+
+        /* Processing Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.6);
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, #2a2a2a, #1f1f1f);
+            color: #e0e0e0;
+            margin: 15% auto;
+            padding: 40px;
+            border-radius: 20px;
+            width: 400px;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+            border: 1px solid #555;
+            animation: modalSlideIn 0.3s ease;
+        }
+
+        @keyframes modalSlideIn {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .spinner {
+            border: 4px solid #444;
+            border-top: 4px solid #888;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .title {
+                font-size: 2em;
+            }
+            
+            .main-content {
+                padding: 20px;
+            }
+            
+            .text-content {
+                font-size: 1.2em;
+            }
+            
+            .buttons {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 class="title">Incoherent Madness</h1>
+            <p class="subtitle">Explore the artistic gradient from coherent logic to chaotic madness</p>
+        </div>
+
+        <div class="main-content">
+            <div class="input-section" style="margin-bottom: 20px;">
+                <h3 style="margin-bottom: 15px; color: #333;"></h3>
+                <textarea 
+                    id="userInput" 
+                    placeholder="Enter your text here to transform it into incoherent madness..."
+                    style="width: 100%; min-height: 120px; padding: 15px; border: 2px solid #666; border-radius: 15px; font-size: 1.1em; font-family: 'Gloria Hallelujah', cursive; resize: vertical; transition: all 0.3s ease; background: rgba(60, 60, 60, 0.9); color: #f5f5f5; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);"
+                    onfocus="this.style.borderColor='#888'; this.style.boxShadow='0 0 0 3px rgba(136, 136, 136, 0.2)'" 
+                    onblur="this.style.borderColor='#666'; this.style.boxShadow='0 4px 15px rgba(0, 0, 0, 0.2)'"
+                ></textarea>
+            </div>
+
+            <div class="text-display">
+                <div class="text-content" id="textContent">
+                    <div class="loading wave">Click "Generate Text" or input your own text to start the journey...</div>
+                </div>
+            </div>
+
+            <div class="api-config" style="background: linear-gradient(135deg, rgba(80, 80, 80, 0.3), rgba(60, 60, 60, 0.2)); border-radius: 15px; padding: 20px; margin-bottom: 25px; border: 1px solid rgba(120, 120, 120, 0.3); box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);">
+                <h4 style="margin-bottom: 10px; color: #c0c0c0;">API Status</h4>
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                    <span id="apiStatus" style="font-weight: bold;">Not Connected</span>
+                    <button class="btn" style="padding: 5px 15px; font-size: 0.8em;" onclick="testConnection()">Test Connection</button>
+                </div>
+                <p style="font-size: 0.8em; color: #666;"></p>Tip: Local fallback version will be used if API is unavailable</p>
+            </div>
+
+            <div class="controls">
+                <div class="slider-container">
+                    <div class="slider-label">
+                        <span>Madness Level</span>
+                        <span class="error-level" id="errorLevel">Crystal Clear (0%)</span>
+                    </div>
+                    <input type="range" min="0" max="100" value="0" class="slider" id="errorSlider">
+                </div>
+
+                <div class="buttons">
+                    <button class="btn btn-primary" onclick="generateText()">Generate Sample</button>
+                    <button class="btn btn-primary" onclick="processUserText()">Process My Text</button>
+                    <button class="btn btn-secondary" onclick="randomizeMadness()">Random Madness</button>
+                    <button class="btn btn-primary" onclick="resetText()">Reset</button>
+                </div>
+            </div>
+
+            <div class="error-info">
+                <h3>Current Madness State:</h3>
+                <div class="error-types" id="errorTypes">
+                    <div class="error-type">Logical Coherence</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>© 2025 Incoherent Madness - Transform Chaos into Art</p>
+        </div>
+    </div>
+
+    <!-- Processing Modal -->
+    <div id="processingModal" class="modal">
+        <div class="modal-content">
+            <div class="spinner"></div>
+            <h3>Processing...</h3>
+            <p id="processingText">Generating madness...</p>
+        </div>
+    </div>
+
+    <script>
+        // API Configuration
+        const API_KEY = 'YOUR_API_KEY';
+        //what I use:const API_URL = 'https://api.moonshot.cn/v1/chat/completions';
+        const API_URL = 'YOUR_API_URL';
+
+        // Sample text library
+        const sampleTexts = [
+            "When spring arrives, cherry blossoms bloom in the park. Children run across the grass, their laughter as crisp as silver bells. The gentle breeze caresses each petal, bringing a warm breath of air. This is a season full of hope, where everything revives and thrives with vitality.",
+            "The development of technology has changed our way of life. Smartphones connect people from all over the world, and information spreads at unprecedented speed. Artificial intelligence is playing an important role in various fields, creating more possibilities for humanity.",
+            "The city at night is brilliantly lit, with neon lights flashing in colorful splendor. Streets are bustling with traffic, and people walk by in a hurry. Skyscrapers reach into the clouds, showcasing the magnificent spectacle of modern civilization. This city never sleeps and is always full of energy.",
+            "Reading is an important way for humans to acquire knowledge. Books carry the wisdom of human civilization, and each page contains the author's thoughts. Through reading, we can transcend time and space, dialogue with sages from ancient and modern times, and expand our horizons.",
+            "Music is the universal language of the world. Beautiful melodies can touch the heart and inspire emotional resonance. Whether it's the solemnity of classical music or the liveliness of popular music, they all add color to our lives and bring spiritual enjoyment."
+        ];
+
+        let currentText = "";
+        let originalText = "";
+        let madnessVersions = {}; // Store different madness level versions
+        let isGenerating = false;
+        let isConnected = false;
+
+        // Initialize
+        document.getElementById('errorSlider').addEventListener('input', updateMadness);
+
+        // Modal functions
+        function showProcessingModal(message = "Generating madness...") {
+            document.getElementById('processingText').textContent = message;
+            document.getElementById('processingModal').style.display = 'block';
+        }
+
+        function hideProcessingModal() {
+            document.getElementById('processingModal').style.display = 'none';
+        }
+
+        // Generate incoherence prompts for different madness levels
+        function getMadnessPrompt(text, intensity) {
+            const formatExample = "When spring arrives, cherry blossoms bloom in the park. Children run across the grass, their laughter as crisp as silver bells. The gentle breeze caresses each petal, bringing a warm breath of air. This is a season full of hope, where everything revives and thrives with vitality.";
+            
+            const prompts = {
+                10: `Please make slight incoherent modifications to the following text, keeping most logic coherent but introducing 1-2 minor logical jumps. 
+
+Format Example (original coherent text):
+"${formatExample}"
+
+Text to modify:
+"${text}"
+
+Requirement: Keep similar text length and sentence structure as the format example, make only minor logical adjustments.`,
+                
+                25: `Please modify the following text to be incoherent, introducing some illogical places but keeping it generally understandable.
+
+Format Example (original coherent text):
+"${formatExample}"
+
+Text to modify:
+"${text}"
+
+Requirement: Introduce 2-3 logical jumps or topic transitions while maintaining the sentence structure and flow similar to the format example.`,
+                
+                40: `Please make obvious incoherent modifications to the following text, making the logical relationships between sentences chaotic.
+
+Format Example (original coherent text):
+"${formatExample}"
+
+Text to modify:
+"${text}"
+
+Requirement: Introduce multiple unrelated content while maintaining grammatical correctness and similar sentence structure as the format example.`,
+                
+                60: `Please make severe incoherent modifications to the following text, making the content very chaotic and jumpy.
+
+Format Example (original coherent text):
+"${formatExample}"
+
+Text to modify:
+"${text}"
+
+Requirement: Introduce many unrelated topics, logically chaotic but interesting, while keeping the overall text structure similar to the format example.`,
+                
+                80: `Please make extreme incoherent modifications to the following text, making it completely chaotic, full of stream of consciousness and random associations.
+
+Format Example (original coherent text):
+"${formatExample}"
+
+Text to modify:
+"${text}"
+
+Requirement: Completely disrupt logic, create surreal text experience while maintaining readable sentence structure similar to the format example.`,
+                
+                100: `Please make the most extreme incoherent modifications to the following text, creating a completely chaotic text full of random jumps and absurd associations.
+
+Format Example (original coherent text):
+"${formatExample}"
+
+Text to modify:
+"${text}"
+
+Requirement: Completely subvert logic, create poetic chaos and pure madness while keeping the text readable and structured similar to the format example.`
+            };
+
+            // Find the closest intensity level
+            const levels = Object.keys(prompts).map(Number).sort((a, b) => a - b);
+            let targetLevel = levels[0];
+            
+            for (let level of levels) {
+                if (intensity >= level) {
+                    targetLevel = level;
+                }
+            }
+            
+            return prompts[targetLevel];
+        }
+
+        // Test API connection
+        async function testConnection() {
+            const statusElement = document.getElementById('apiStatus');
+            statusElement.textContent = 'Testing...';
+            statusElement.style.color = '#FFC107';
+            
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${API_KEY}`
+                    },
+                    body: JSON.stringify({
+                        model: 'moonshot-v1-8k',
+                        messages: [
+                            {
+                                role: 'user',
+                                content: 'Hello, this is a connection test.'
+                            }
+                        ],
+                        max_tokens: 10
+                    })
+                });
+
+                if (response.ok) {
+                    statusElement.textContent = 'Connected ✓';
+                    statusElement.style.color = '#4CAF50';
+                    isConnected = true;
+                } else {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+            } catch (error) {
+                statusElement.textContent = 'Connection Failed ✗';
+                statusElement.style.color = '#FF5722';
+                isConnected = false;
+                console.error('Connection test failed:', error);
+            }
+        }
+
+        // Call API to generate text
+        async function generateMadText(text, intensity) {
+            if (intensity === 0) return text;
+            
+            const prompt = getMadnessPrompt(text, intensity);
+            
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${API_KEY}`
+                    },
+                    body: JSON.stringify({
+                        model: 'moonshot-v1-8k',
+                        messages: [
+                            {
+                                role: 'user',
+                                content: prompt
+                            }
+                        ],
+                        temperature: 0.8,
+                        max_tokens: 1000
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`API request failed: ${response.status}`);
+                }
+
+                const data = await response.json();
+                return data.choices[0].message.content.trim();
+            } catch (error) {
+                console.error('API call error:', error);
+                // If API call fails, return local generated simple version
+                return generateLocalMadness(text, intensity);
+            }
+        }
+
+        // Local generation of simple incoherent version (as fallback)
+        function generateLocalMadness(text, intensity) {
+            const sentences = text.split(/[.!?]/);
+            let result = [];
+            
+            const randomInserts = [
+                "Suddenly I thought of yesterday's rain",
+                "By the way, I like blue",
+                "This reminds me of childhood candy",
+                "But speaking of which, the moon is so round",
+                "Oh, did you know penguins can't fly",
+                "Suddenly, time stopped",
+                "At this moment, a cat walked by",
+                "Changing the subject, coffee smells good",
+                "The purple elephant dances in my dreams",
+                "Mathematics tastes like strawberries today"
+            ];
+            
+            sentences.forEach((sentence, index) => {
+                if (sentence.trim()) {
+                    result.push(sentence.trim());
+                    
+                    // Randomly insert unrelated content based on intensity
+                    if (Math.random() * 100 < intensity && index < sentences.length - 1) {
+                        const randomInsert = randomInserts[Math.floor(Math.random() * randomInserts.length)];
+                        result.push(randomInsert);
+                    }
+                }
+            });
+            
+            return result.join('. ') + '.';
+        }
+
+        async function generateText() {
+            const randomIndex = Math.floor(Math.random() * sampleTexts.length);
+            originalText = sampleTexts[randomIndex];
+            currentText = originalText;
+            madnessVersions = { 0: originalText }; // Reset version cache
+            
+            document.getElementById('textContent').innerHTML = currentText;
+            document.getElementById('errorSlider').value = 0;
+            updateMadnessLevel(0);
+            updateMadnessTypes(0);
+        }
+
+        async function processUserText() {
+            const userInput = document.getElementById('userInput').value.trim();
+            if (!userInput) {
+                alert('Please enter some text first!');
+                return;
+            }
+            
+            originalText = userInput;
+            currentText = originalText;
+            madnessVersions = { 0: originalText }; // Reset version cache
+            
+            document.getElementById('textContent').innerHTML = currentText;
+            document.getElementById('errorSlider').value = 0;
+            updateMadnessLevel(0);
+            updateMadnessTypes(0);
+        }
+
+        async function updateMadness() {
+            if (isGenerating) return;
+            
+            const slider = document.getElementById('errorSlider');
+            const intensity = parseInt(slider.value);
+            
+            updateMadnessLevel(intensity);
+            
+            if (!originalText) return;
+            
+            // Check if cached version exists
+            if (madnessVersions[intensity]) {
+                currentText = madnessVersions[intensity];
+                document.getElementById('textContent').innerHTML = currentText;
+                updateMadnessTypes(intensity);
+                return;
+            }
+            
+            // Show loading state
+            isGenerating = true;
+            document.getElementById('textContent').innerHTML = 
+                '<div class="loading wave">Generating madness version...</div>';
+            
+            try {
+                // Generate new version
+                const madText = await generateMadText(originalText, intensity);
+                madnessVersions[intensity] = madText;
+                currentText = madText;
+                
+                document.getElementById('textContent').innerHTML = currentText;
+                updateMadnessTypes(intensity);
+            } catch (error) {
+                console.error('Generation failed:', error);
+                document.getElementById('textContent').innerHTML = 
+                    '<div style="color: red;">Generation failed, please check API configuration or network connection</div>';
+            } finally {
+                isGenerating = false;
+            }
+        }
+
+        function updateCoherenceLevel(intensity) {
+            const errorLevel = document.getElementById('errorLevel');
+            let level, color;
+            
+            if (intensity === 0) {
+                level = "逻辑清晰";
+                color = "#4CAF50";
+            } else if (intensity < 25) {
+                level = "轻微跳跃";
+                color = "#8BC34A";
+            } else if (intensity < 50) {
+                level = "明显混乱";
+                color = "#FFC107";
+            } else if (intensity < 75) {
+                level = "严重错乱";
+                color = "#FF9800";
+            } else {
+                level = "完全混沌";
+                color = "#FF5722";
+            }
+            
+            errorLevel.textContent = `${level} (${intensity}%)`;
+            errorLevel.style.color = color;
+        }
+
+        function updateCoherenceTypes(intensity) {
+            const errorTypesDiv = document.getElementById('errorTypes');
+            let types = [];
+            
+            if (intensity === 0) {
+                types = ["逻辑连贯"];
+            } else if (intensity < 25) {
+                types = ["轻微跳跃", "话题偏移"];
+            } else if (intensity < 50) {
+                types = ["逻辑断裂", "内容跳跃", "关联混乱"];
+            } else if (intensity < 75) {
+                types = ["严重错乱", "随机插入", "逻辑颠倒"];
+            } else {
+                types = ["完全混沌", "意识流", "超现实主义"];
+            }
+            
+            errorTypesDiv.innerHTML = types.map(type => 
+                `<div class="error-type">${type}</div>`
+            ).join('');
+        }
+
+        function randomizeCoherence() {
+            if (!originalText) {
+                generateText();
+                return;
+            }
+            
+            const randomIntensity = Math.floor(Math.random() * 101);
+            document.getElementById('errorSlider').value = randomIntensity;
+            updateCoherence();
+        }
+
+        function resetText() {
+            if (originalText) {
+                currentText = originalText;
+                document.getElementById('textContent').innerHTML = currentText;
+                document.getElementById('errorSlider').value = 0;
+                updateCoherenceLevel(0);
+                updateCoherenceTypes(0);
+            }
+        }
+
+        // Add missing functions
+        function processUserText() {
+            const userInput = document.getElementById('userInput').value.trim();
+            if (!userInput) {
+                alert('Please enter some text first!');
+                return;
+            }
+            
+            originalText = userInput;
+            currentText = originalText;
+            madnessVersions = { 0: originalText };
+            
+            document.getElementById('textContent').innerHTML = currentText;
+            document.getElementById('errorSlider').value = 0;
+            updateMadnessLevel(0);
+            updateMadnessTypes(0);
+        }
+
+        function randomizeMadness() {
+            if (!originalText) {
+                generateText();
+                return;
+            }
+            
+            const randomIntensity = Math.floor(Math.random() * 101);
+            document.getElementById('errorSlider').value = randomIntensity;
+            updateMadness();
+        }
+
+        async function updateMadness() {
+            if (isGenerating) return;
+            
+            const slider = document.getElementById('errorSlider');
+            const intensity = parseInt(slider.value);
+            
+            updateMadnessLevel(intensity);
+            
+            if (!originalText) return;
+            
+            // Check if cached version exists
+            if (madnessVersions[intensity]) {
+                currentText = madnessVersions[intensity];
+                document.getElementById('textContent').innerHTML = currentText;
+                updateMadnessTypes(intensity);
+                return;
+            }
+            
+            // Show processing modal
+            isGenerating = true;
+            showProcessingModal(`Generating ${intensity}% madness...`);
+            
+            try {
+                // Generate new version
+                const madText = await generateMadText(originalText, intensity);
+                madnessVersions[intensity] = madText;
+                currentText = madText;
+                
+                document.getElementById('textContent').innerHTML = currentText;
+                updateMadnessTypes(intensity);
+            } catch (error) {
+                console.error('Generation failed:', error);
+                document.getElementById('textContent').innerHTML = 
+                    '<div style="color: red;">Generation failed, please check API configuration or network connection</div>';
+            } finally {
+                isGenerating = false;
+                hideProcessingModal();
+            }
+        }
+
+        function updateMadnessLevel(intensity) {
+            const madnessLevel = document.getElementById('errorLevel');
+            let level, color;
+            
+            if (intensity === 0) {
+                level = "Crystal Clear";
+                color = "#4CAF50";
+            } else if (intensity < 25) {
+                level = "Slight Confusion";
+                color = "#8BC34A";
+            } else if (intensity < 50) {
+                level = "Obvious Chaos";
+                color = "#FFC107";
+            } else if (intensity < 75) {
+                level = "Severe Madness";
+                color = "#FF9800";
+            } else {
+                level = "Pure Insanity";
+                color = "#FF5722";
+            }
+            
+            madnessLevel.textContent = `${level} (${intensity}%)`;
+            madnessLevel.style.color = color;
+        }
+
+        function updateMadnessTypes(intensity) {
+            const madnessTypesDiv = document.getElementById('errorTypes');
+            let types = [];
+            
+            if (intensity === 0) {
+                types = ["Logical Coherence"];
+            } else if (intensity < 25) {
+                types = ["Minor Jumps", "Topic Drift"];
+            } else if (intensity < 50) {
+                types = ["Logic Breaks", "Content Jumps", "Association Chaos"];
+            } else if (intensity < 75) {
+                types = ["Severe Disorder", "Random Insertion", "Logic Reversal"];
+            } else {
+                types = ["Complete Chaos", "Stream of Consciousness", "Surrealism"];
+            }
+            
+            madnessTypesDiv.innerHTML = types.map(type => 
+                `<div class="error-type">${type}</div>`
+            ).join('');
+        }
+
+        // Initialize with a sample text
+        window.addEventListener('load', () => {
+            setTimeout(generateText, 500);
+        });
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('processingModal');
+            if (event.target == modal) {
+                hideProcessingModal();
+            }
+        }
+    </script>
+</body>
+</html>
